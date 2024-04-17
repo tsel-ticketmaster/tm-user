@@ -45,6 +45,9 @@ func main() {
 	psqldb := postgresql.GetDatabase()
 
 	rc := redis.GetClient()
+	if rerr := rc.Ping(context.Background()).Err(); rerr != nil {
+		fmt.Println(rerr)
+	}
 
 	session := session.NewRedisSessionStore(logger, rc)
 

@@ -29,6 +29,7 @@ func InitHTTPHandler(router *http.ServeMux, adminSession *middleware.AdminSessio
 
 	router.HandleFunc("POST /api/v1/adminapp/administrators/signin", publicMiddleware.SetRouteChain(handler.SignIn))
 	router.HandleFunc("POST /api/v1/adminapp/administrators", publicMiddleware.SetRouteChain(handler.Create, adminSession.Verify))
+	router.HandleFunc("POST /api/v1/adminapp/administrators/signout", publicMiddleware.SetRouteChain(handler.SignOut, adminSession.Verify))
 }
 
 func (handler HTTPHandler) validate(ctx context.Context, payload interface{}) error {
@@ -84,7 +85,11 @@ func (handler HTTPHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, resp)
+	response.JSON(w, http.StatusCreated, response.RESTEnvelope{
+		Status:  status.CREATED,
+		Message: "admin has been successfully created",
+		Data:    resp,
+	})
 }
 
 func (handler HTTPHandler) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -121,6 +126,28 @@ func (handler HTTPHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusCreated, response.RESTEnvelope{
-		Data: resp,
+		Status:  status.OK,
+		Message: "admin has been successfully signed in",
+		Data:    resp,
+	})
+}
+
+func (handler HTTPHandler) SignOut(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	err := handler.AdminUseCase.SignOut(ctx)
+	if err != nil {
+		ae := errors.Destruct(err)
+		response.JSON(w, ae.HTTPStatusCode, response.RESTEnvelope{
+			Status:  ae.Status,
+			Message: ae.Message,
+		})
+
+		return
+	}
+
+	response.JSON(w, http.StatusCreated, response.RESTEnvelope{
+		Status:  status.OK,
+		Message: "admin has been successfully signed out",
 	})
 }

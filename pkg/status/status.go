@@ -2,6 +2,7 @@ package status
 
 const (
 	OK                    = "OK"
+	CREATED               = "CREATED"
 	BAD_REQUEST           = "BAD_REQUEST"
 	UNAUTHORIZED          = "UNAUTHORIZED"
 	FORBIDDEN             = "FORBIDDEN"

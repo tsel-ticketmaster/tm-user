@@ -162,7 +162,7 @@ func (r *adminRepository) FindByID(ctx context.Context, ID int64, tx *sql.Tx) (A
 
 	var data Administrator
 	err = row.Scan(
-		&data.ID, &data.Name, &data.Password, &data.PasswordSalt, &data.Status, &data.CreatedAt, &data.UpdatedAt,
+		&data.ID, &data.Name, &data.Email, &data.Password, &data.PasswordSalt, &data.Status, &data.CreatedAt, &data.UpdatedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {

@@ -17,6 +17,7 @@ import (
 type AdminUseCase interface {
 	SignIn(context.Context, SignInRequest) (SignInResponse, error)
 	Create(context.Context, CreateRequest) (CreateResponse, error)
+	SignOut(context.Context) error
 	// GetByID(context.Context, GetByIDRequest) (GetByIDResponse, error)
 	// GetMany(context.Context, GetManyRequest) (GetManyResponse, error)
 	// ChangeEmail(context.Context, ChangeEmailRequest) (ChangeEmailResponse, error)
@@ -66,7 +67,7 @@ func (a adminUseCase) Create(ctx context.Context, req CreateRequest) (CreateResp
 
 	now := time.Now()
 	passwordSalt := util.GenerateRandomHEX(16)
-	defaultPassword := util.GenerateRandomHEX(16)
+	defaultPassword := "P@ssw0rd"
 	hashedPassword := util.GenerateSecret(defaultPassword, passwordSalt)
 
 	newAdmin := Administrator{
@@ -74,7 +75,7 @@ func (a adminUseCase) Create(ctx context.Context, req CreateRequest) (CreateResp
 		Email:        req.Email,
 		Password:     hashedPassword,
 		PasswordSalt: passwordSalt,
-		Status:       StatusInactive,
+		Status:       StatusActive,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -145,4 +146,27 @@ func (a adminUseCase) SignIn(ctx context.Context, req SignInRequest) (SignInResp
 	}
 
 	return resp, nil
+}
+
+// SignOut will sign out the administrator and kill the existing session.
+func (a adminUseCase) SignOut(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, a.timeout)
+	defer cancel()
+
+	acc, err := session.GetAccountFromCtx(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.adminRepository.FindByID(ctx, acc.ID, nil)
+	if err != nil {
+		return err
+	}
+
+	key := fmt.Sprintf("admin:%d", acc.ID)
+	if err := a.session.Delete(ctx, key); err != nil {
+		return err
+	}
+
+	return nil
 }

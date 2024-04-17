@@ -13,6 +13,10 @@ import (
 	"github.com/tsel-ticketmaster/tm-user/pkg/status"
 )
 
+var (
+	sessionKeyPrefix string = "session:user:%s"
+)
+
 type AccountContextKey struct{}
 
 type Account struct {
@@ -23,7 +27,7 @@ type Account struct {
 
 type Session interface {
 	Set(ctx context.Context, key string, acc Account, ttl time.Duration) error
-	Delete(ctx context.Context) error
+	Delete(ctx context.Context, key string) error
 	Get(ctx context.Context, key string) (Account, error)
 }
 
@@ -33,13 +37,20 @@ type redisSessionStore struct {
 }
 
 // Delete implements Session.
-func (s *redisSessionStore) Delete(ctx context.Context) error {
-	panic("unimplemented")
+func (s *redisSessionStore) Delete(ctx context.Context, key string) error {
+	sessionKey := fmt.Sprintf(sessionKeyPrefix, key)
+
+	if err := s.r.Del(ctx, sessionKey).Err(); err != nil {
+		s.l.WithContext(ctx).WithError(err).Error()
+		return errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "")
+	}
+
+	return nil
 }
 
 // Get implements Session.
 func (s *redisSessionStore) Get(ctx context.Context, key string) (Account, error) {
-	sessionKey := fmt.Sprintf("user:session:%s", key)
+	sessionKey := fmt.Sprintf(sessionKeyPrefix, key)
 	acc := Account{}
 	dataBuff, err := s.r.Get(ctx, sessionKey).Bytes()
 	if err != nil {
@@ -58,40 +69,14 @@ func (s *redisSessionStore) Get(ctx context.Context, key string) (Account, error
 
 // Set implements Session.
 func (s *redisSessionStore) Set(ctx context.Context, key string, acc Account, ttl time.Duration) error {
-	sessionKey := fmt.Sprintf("user:session:%s", key)
-
-	transaction := func(tx *redis.Tx) error {
-		err := tx.Get(ctx, sessionKey).Err()
-
-		if err == nil {
-			return errors.New(http.StatusForbidden, status.ALREADY_SIGNED_IN, "")
-		}
-		if err != redis.Nil {
-			s.l.WithContext(ctx).WithError(err).Error()
-			return errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "")
-		}
-
-		_, err = tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
-			accBuff, _ := json.Marshal(acc)
-			if err := p.Set(ctx, sessionKey, accBuff, ttl).Err(); err != nil {
-				s.l.WithContext(ctx).WithError(err).Error()
-				return errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "")
-			}
-
-			return nil
-		})
-
-		return err
+	sessionKey := fmt.Sprintf(sessionKeyPrefix, key)
+	accBuff, _ := json.Marshal(acc)
+	if err := s.r.Set(ctx, sessionKey, accBuff, ttl).Err(); err != nil {
+		s.l.WithContext(ctx).WithError(err).Error()
+		return errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "")
 	}
 
-	err := s.r.Watch(ctx, transaction, sessionKey)
-	if err != nil {
-		if _, ok := err.(*errors.AppError); !ok {
-			s.l.WithContext(ctx).WithError(err).Error()
-		}
-	}
-
-	return err
+	return nil
 }
 
 func NewRedisSessionStore(l *logrus.Logger, r redis.UniversalClient) Session {

@@ -54,6 +54,7 @@ type Config struct {
 	}
 	Redis struct {
 		Addrs    []string
+		Username string
 		Password string
 		DB       int
 	}
@@ -111,6 +112,7 @@ func (c *Config) postgresql() {
 
 func (cfg *Config) redis() {
 	cfg.Redis.Addrs = strings.Split(os.Getenv("REDIS_HOSTS"), ",")
+	cfg.Redis.Username = os.Getenv("REDIS_USERNAME")
 	cfg.Redis.Password = os.Getenv("REDIS_PASSWORD")
 	cfg.Redis.DB, _ = strconv.Atoi(os.Getenv("REDIS_DB"))
 }

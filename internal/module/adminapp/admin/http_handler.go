@@ -125,7 +125,7 @@ func (handler HTTPHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, response.RESTEnvelope{
+	response.JSON(w, http.StatusOK, response.RESTEnvelope{
 		Status:  status.OK,
 		Message: "admin has been successfully signed in",
 		Data:    resp,

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/mux"
 	"github.com/tsel-ticketmaster/tm-user/internal/pkg/middleware"
 	"github.com/tsel-ticketmaster/tm-user/pkg/errors"
 	publicMiddleware "github.com/tsel-ticketmaster/tm-user/pkg/middleware"
@@ -21,15 +22,15 @@ type HTTPHandler struct {
 	AdminUseCase      AdminUseCase
 }
 
-func InitHTTPHandler(router *http.ServeMux, adminSession *middleware.AdminSession, validate *validator.Validate, adminUseCase AdminUseCase) {
+func InitHTTPHandler(router *mux.Router, adminSession *middleware.AdminSession, validate *validator.Validate, adminUseCase AdminUseCase) {
 	handler := &HTTPHandler{
 		Validate:     validate,
 		AdminUseCase: adminUseCase,
 	}
 
-	router.HandleFunc("POST /api/v1/adminapp/administrators/signin", publicMiddleware.SetRouteChain(handler.SignIn))
-	router.HandleFunc("POST /api/v1/adminapp/administrators", publicMiddleware.SetRouteChain(handler.Create, adminSession.Verify))
-	router.HandleFunc("POST /api/v1/adminapp/administrators/signout", publicMiddleware.SetRouteChain(handler.SignOut, adminSession.Verify))
+	router.HandleFunc("/api/v1/adminapp/administrators/signin", publicMiddleware.SetRouteChain(handler.SignIn)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/adminapp/administrators", publicMiddleware.SetRouteChain(handler.Create, adminSession.Verify)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/adminapp/administrators/signout", publicMiddleware.SetRouteChain(handler.SignOut, adminSession.Verify)).Methods(http.MethodPost)
 }
 
 func (handler HTTPHandler) validate(ctx context.Context, payload interface{}) error {

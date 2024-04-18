@@ -15,7 +15,7 @@ cover: test
 
 run.dev:
 	@echo "Run in development mode ..."
-		GOOGLE_APPLICATION_CREDENTIALS=/home/patrick/Documents/tsel-assessment/tsel-ticketmaster-application.json go run cmd/app/main.go
+		GOOGLE_APPLICATION_CREDENTIALS=/home/patrick/Documents/tsel-assessment/tsel-ticketmaster-github-action.json go run cmd/app/main.go
 
 build:
 	@echo "Building the executable file ..."

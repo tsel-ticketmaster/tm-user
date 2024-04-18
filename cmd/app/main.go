@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"github.com/tsel-ticketmaster/tm-user/config"
 	"github.com/tsel-ticketmaster/tm-user/internal/module/adminapp/admin"
@@ -21,6 +22,7 @@ import (
 	"github.com/tsel-ticketmaster/tm-user/pkg/redis"
 	"github.com/tsel-ticketmaster/tm-user/pkg/server"
 	"github.com/tsel-ticketmaster/tm-user/pkg/validator"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
 func main() {
@@ -33,7 +35,7 @@ func main() {
 	mon := monitoring.NewOpenTelemetry(
 		c.Application.Name,
 		c.Application.Environment,
-		c.OpenTelemetry.Collector.Endpoint,
+		c.GCP.ProjectID,
 	)
 
 	mon.Start(ctx)
@@ -56,7 +58,12 @@ func main() {
 
 	adminSessionMiddleware := internalMiddleare.NewAdminSessionMiddleware(jsonWebToken, session)
 
-	router := http.NewServeMux()
+	router := mux.NewRouter()
+	router.Use(
+		otelmux.Middleware(c.Application.Name),
+		middleware.HTTPResponseTraceInjection,
+		middleware.NewHTTPRequestLogger(logger, c.Application.Debug).Middleware,
+	)
 
 	// admin's app
 	adminappAdminRepository := admin.NewAdminRepository(logger, psqldb)
@@ -71,9 +78,6 @@ func main() {
 
 	handler := middleware.SetChain(
 		router,
-		middleware.HTTPOpenTelemetryTracer,
-		middleware.HTTPResponseTraceInjection,
-		middleware.NewHTTPRequestLogger(logger, c.Application.Debug).Middleware,
 		cors.New(cors.Options{
 			AllowedOrigins:   c.CORS.AllowedOrigins,
 			AllowedMethods:   c.CORS.AllowedMethods,

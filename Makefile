@@ -13,14 +13,14 @@ cover: test
 		go tool cover -func=./coverage/coverage.out &&\
 			go tool cover -html=./coverage/coverage.out -o ./coverage/coverage.html
 
-run.web:
+run.dev:
 	@echo "Run in development mode ..."
-		go run cmd/web/main.go
+		go run cmd/app/main.go
 
-build.web:
+build:
 	@echo "Building the executable file ..."
-		CGO_ENABLED=0 GOOS=linux go build -a -o bin/webapp cmd/web/main.go &&\
-			cp bin/webapp /tmp/webapp
+		CGO_ENABLED=0 GOOS=linux go build -a -o bin/app cmd/app/main.go &&\
+			cp bin/app /tmp/app
 
 clean:
 	@echo "Cleansing the last built ..."

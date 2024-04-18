@@ -43,10 +43,13 @@ func main() {
 	jsonWebToken := jwt.NewJSONWebToken(c.JWT.PrivateKey, c.JWT.PublicKey)
 
 	psqldb := postgresql.GetDatabase()
+	if err := psqldb.Ping(); err != nil {
+		logger.WithContext(ctx).WithError(err).Error()
+	}
 
 	rc := redis.GetClient()
-	if rerr := rc.Ping(context.Background()).Err(); rerr != nil {
-		fmt.Println(rerr)
+	if err := rc.Ping(context.Background()).Err(); err != nil {
+		logger.WithContext(ctx).WithError(err).Error()
 	}
 
 	session := session.NewRedisSessionStore(logger, rc)
@@ -98,5 +101,7 @@ func main() {
 	<-sigterm
 
 	srv.Shutdown(ctx)
+	psqldb.Close()
+	rc.Close()
 	mon.Stop(ctx)
 }

@@ -30,4 +30,36 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Authorize Cloud Artifact Registry as Docker Registry
+        env:
+          GCP_REGION: ${{ vars.GCP_REGION }}
+        run: gcloud auth configure-docker $GCP_REGION-docker.pkg.dev
+
+      - name: Build Docker Image
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ vars.GCP_REGION }}
+          GCP_AR_REPOSITORY: ${{ vars.GCP_AR_REPOSITORY }}
+          APPLICATION_NAME: ${{ vars.APPLICATION_NAME  }}
+        run: |-
+          docker build -t $GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$GCP_AR_REPOSITORY/$APPLICATION_NAME:$GITHUB_SHA .
+
+      - name: Push Docker Image to Registry
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ vars.GCP_REGION }}
+          GCP_AR_REPOSITORY: ${{ vars.GCP_AR_REPOSITORY }}
+          APPLICATION_NAME: ${{ vars.APPLICATION_NAME  }}
+        run: |-
+          docker push $GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$GCP_AR_REPOSITORY/$APPLICATION_NAME:$GITHUB_SHA
 

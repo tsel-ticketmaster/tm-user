@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -95,8 +94,6 @@ func (c *Config) jwt() {
 
 	c.JWT.PrivateKey = []byte(jwtRsa.PrivateKey)
 	c.JWT.PublicKey = []byte(jwtRsa.PublicKey)
-
-	fmt.Println(string(jwtRsa.PrivateKey))
 }
 
 func (c *Config) postgresql() {

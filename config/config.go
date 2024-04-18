@@ -57,6 +57,10 @@ type Config struct {
 		Password string
 		DB       int
 	}
+	GCP struct {
+		ProjectID      string
+		ServiceAccount []byte
+	}
 }
 
 func (cfg *Config) application() {
@@ -114,6 +118,11 @@ func (cfg *Config) redis() {
 	cfg.Redis.DB, _ = strconv.Atoi(os.Getenv("REDIS_DB"))
 }
 
+func (cfg *Config) gcp() {
+	cfg.GCP.ServiceAccount = []byte(os.Getenv("GCP_SERVICE_ACCOUNT"))
+	cfg.GCP.ProjectID = os.Getenv("GCP_PROJECT_ID")
+}
+
 func load() *Config {
 	cfg := new(Config)
 	cfg.application()
@@ -122,6 +131,7 @@ func load() *Config {
 	cfg.postgresql()
 	cfg.cors()
 	cfg.redis()
+	cfg.gcp()
 	return cfg
 }
 

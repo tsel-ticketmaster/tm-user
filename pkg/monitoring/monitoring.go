@@ -3,10 +3,10 @@ package monitoring
 import (
 	"context"
 
+	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+	"go.opentelemetry.io/contrib/detectors/gcp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -21,20 +21,17 @@ type OpenTelemetry interface {
 type openTelemetryImpl struct {
 	serviceName   string
 	environment   string
-	endpoint      string
+	gcpProjectID  string
 	resource      *resource.Resource
-	traceExporter *otlptrace.Exporter
+	traceExporter *texporter.Exporter
 }
 
-func NewOpenTelemetry(serviceName, environment, endpoint string) OpenTelemetry {
+func NewOpenTelemetry(serviceName, environment, gcpProjectID string) OpenTelemetry {
 	ctx := context.Background()
 	res, _ := resource.New(
 		ctx,
-		resource.WithFromEnv(),
-		resource.WithProcess(),
+		resource.WithDetectors(gcp.NewDetector()),
 		resource.WithTelemetrySDK(),
-		resource.WithHost(),
-		resource.WithSchemaURL(semconv.SchemaURL),
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String(serviceName),
 			attribute.String("environment", environment),
@@ -42,36 +39,24 @@ func NewOpenTelemetry(serviceName, environment, endpoint string) OpenTelemetry {
 	)
 
 	return &openTelemetryImpl{
-		serviceName: serviceName,
-		environment: environment,
-		endpoint:    endpoint,
-		resource:    res,
+		serviceName:  serviceName,
+		environment:  environment,
+		gcpProjectID: gcpProjectID,
+		resource:     res,
 	}
 }
 
 // Start implements OpenTelemetry.
 func (ot *openTelemetryImpl) Start(ctx context.Context) (err error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	client := otlptracegrpc.NewClient(
-		otlptracegrpc.WithInsecure(),
-		otlptracegrpc.WithEndpoint(ot.endpoint),
-		otlptracegrpc.WithDialOption(),
-	)
-
-	exporter, err := otlptrace.New(ctx, client)
+	exporter, err := texporter.New(texporter.WithProjectID(ot.gcpProjectID))
 	if err != nil {
 		otel.Handle(err)
 		return
 	}
 
-	bsp := trace.NewBatchSpanProcessor(exporter)
 	provider := trace.NewTracerProvider(
-		trace.WithSampler(trace.AlwaysSample()),
+		trace.WithBatcher(exporter),
 		trace.WithResource(ot.resource),
-		trace.WithSpanProcessor(bsp),
 	)
 
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
@@ -86,6 +71,10 @@ func (ot *openTelemetryImpl) Start(ctx context.Context) (err error) {
 func (ot *openTelemetryImpl) Stop(ctx context.Context) (err error) {
 	if ctx == nil {
 		ctx = context.Background()
+	}
+
+	if ot.traceExporter == nil {
+		return nil
 	}
 
 	err = ot.traceExporter.Shutdown(ctx)

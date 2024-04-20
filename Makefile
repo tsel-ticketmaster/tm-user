@@ -19,7 +19,7 @@ run.dev:
 
 build:
 	@echo "Building the executable file ..."
-		CGO_ENABLED=0 GOOS=linux go build -a -o bin/app cmd/app/main.go &&\
+		CGO_ENABLED=1 GOOS=linux go build -tags musl -a -o bin/app cmd/app/main.go &&\
 			cp bin/app /tmp/app
 
 clean:

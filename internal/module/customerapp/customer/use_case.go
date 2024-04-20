@@ -13,6 +13,7 @@ import (
 	"github.com/tsel-ticketmaster/tm-user/internal/pkg/session"
 	"github.com/tsel-ticketmaster/tm-user/internal/pkg/util"
 	"github.com/tsel-ticketmaster/tm-user/pkg/errors"
+	"github.com/tsel-ticketmaster/tm-user/pkg/pubsub"
 	"github.com/tsel-ticketmaster/tm-user/pkg/status"
 )
 
@@ -36,6 +37,7 @@ type CustomerUseCaseProperty struct {
 	JSONWebToken       *jwt.JSONWebToken
 	Session            session.Session
 	Cache              redis.UniversalClient
+	Publisher          pubsub.Publisher
 	CustomerRepository CustomerRepository
 }
 
@@ -47,6 +49,7 @@ type customerUseCase struct {
 	jsonWebToken       *jwt.JSONWebToken
 	session            session.Session
 	cache              redis.UniversalClient
+	publisher          pubsub.Publisher
 	customerRepository CustomerRepository
 }
 
@@ -304,7 +307,7 @@ func (u *customerUseCase) SignUp(ctx context.Context, req SignUpRequest) (SignUp
 		return SignUpResponse{}, errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "an error occured while signing up customer")
 	}
 
-	// publish for email notification
+	u.publisher.Publish(ctx, "customer-sign-up", fmt.Sprintf("customer:%d", c.ID), nil, signUpEventBuff)
 
 	resp := SignUpResponse{
 		VerificationExpiresAt: linkExpiresAt,
@@ -428,6 +431,7 @@ func NewCustomerUseCase(props CustomerUseCaseProperty) CustomerUseCase {
 		jsonWebToken:       props.JSONWebToken,
 		session:            props.Session,
 		cache:              props.Cache,
+		publisher:          props.Publisher,
 		customerRepository: props.CustomerRepository,
 	}
 }

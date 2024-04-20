@@ -63,6 +63,14 @@ type Config struct {
 		Password string
 		DB       int
 	}
+	Kafka struct {
+		Hosts            string
+		SecurityProtocol string
+		SASLMechanisms   string
+		SASLUsername     string
+		SASLPassword     string
+		SessionTimeout   int
+	}
 	GCP struct {
 		ProjectID      string
 		ServiceAccount []byte
@@ -130,6 +138,15 @@ func (cfg *Config) redis() {
 	cfg.Redis.DB, _ = strconv.Atoi(os.Getenv("REDIS_DB"))
 }
 
+func (cfg *Config) kafka() {
+	cfg.Kafka.Hosts = os.Getenv("KAFKA_HOSTS")
+	cfg.Kafka.SecurityProtocol = os.Getenv("KAFKA_SECURITY_PROTOCOL")
+	cfg.Kafka.SASLMechanisms = os.Getenv("KAFKA_SASL_MECHANISMS")
+	cfg.Kafka.SASLUsername = os.Getenv("KAFKA_SASL_USERNAME")
+	cfg.Kafka.SASLPassword = os.Getenv("KAFKA_SASL_PASSWORD")
+	cfg.Kafka.SessionTimeout, _ = strconv.Atoi(os.Getenv("KAFKA_SESSION_TIMEOUT_MS"))
+}
+
 func (cfg *Config) gcp() {
 	cfg.GCP.ServiceAccount = []byte(os.Getenv("GCP_SERVICE_ACCOUNT"))
 	cfg.GCP.ProjectID = os.Getenv("GCP_PROJECT_ID")
@@ -144,6 +161,7 @@ func load() *Config {
 	cfg.postgresql()
 	cfg.cors()
 	cfg.redis()
+	cfg.kafka()
 	cfg.gcp()
 	return cfg
 }

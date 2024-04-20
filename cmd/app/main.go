@@ -17,9 +17,11 @@ import (
 	internalMiddleare "github.com/tsel-ticketmaster/tm-user/internal/pkg/middleware"
 	"github.com/tsel-ticketmaster/tm-user/internal/pkg/session"
 	"github.com/tsel-ticketmaster/tm-user/pkg/applogger"
+	"github.com/tsel-ticketmaster/tm-user/pkg/kafka"
 	"github.com/tsel-ticketmaster/tm-user/pkg/middleware"
 	"github.com/tsel-ticketmaster/tm-user/pkg/monitoring"
 	"github.com/tsel-ticketmaster/tm-user/pkg/postgresql"
+	"github.com/tsel-ticketmaster/tm-user/pkg/pubsub"
 	"github.com/tsel-ticketmaster/tm-user/pkg/redis"
 	"github.com/tsel-ticketmaster/tm-user/pkg/server"
 	"github.com/tsel-ticketmaster/tm-user/pkg/validator"
@@ -49,6 +51,8 @@ func main() {
 	if err := psqldb.Ping(); err != nil {
 		logger.WithContext(ctx).WithError(err).Error()
 	}
+
+	publisher := pubsub.PublisherFromConfluentKafkaProducer(logger, kafka.NewProducer())
 
 	rc := redis.GetClient()
 	if err := rc.Ping(context.Background()).Err(); err != nil {
@@ -88,6 +92,7 @@ func main() {
 		JSONWebToken:       jsonWebToken,
 		Session:            session,
 		Cache:              rc,
+		Publisher:          publisher,
 		CustomerRepository: customerappCustomerRepository,
 	})
 	customer.InitHTTPHandler(router, customerSessionMiddleware, validate, customerappCustomerUseCase)
@@ -121,6 +126,7 @@ func main() {
 	<-sigterm
 
 	srv.Shutdown(ctx)
+	publisher.Close()
 	psqldb.Close()
 	rc.Close()
 	mon.Stop(ctx)

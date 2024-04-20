@@ -11,10 +11,12 @@ require (
 require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.22.0
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/gorilla/mux v1.8.1
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/rs/cors v1.10.1
+	github.com/signalfx/splunk-otel-go/instrumentation/github.com/confluentinc/confluent-kafka-go/kafka/splunkkafka v1.15.0
 	github.com/stretchr/testify v1.9.0
 	github.com/uptrace/opentelemetry-go-extra/otellogrus v0.2.3
 	github.com/uptrace/opentelemetry-go-extra/otelzap v0.2.3
@@ -47,6 +49,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 // indirect
+	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.15.0 // indirect
 	github.com/uptrace/opentelemetry-go-extra/otelutil v0.2.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

@@ -30,6 +30,7 @@ type CustomerUseCase interface {
 }
 
 type CustomerUseCaseProperty struct {
+	AppName            string
 	Logger             *logrus.Logger
 	Timeout            time.Duration
 	TMUserBaseURL      string
@@ -42,6 +43,7 @@ type CustomerUseCaseProperty struct {
 }
 
 type customerUseCase struct {
+	appName            string
 	logger             *logrus.Logger
 	timeout            time.Duration
 	tmuserBaseURL      string
@@ -93,7 +95,10 @@ func (u *customerUseCase) ChangeEmail(ctx context.Context, req ChangeEmailReques
 		return ChangeEmailResponse{}, errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "an error occured while changing customer's email")
 	}
 
-	// publish for email notification
+	messageHeader := pubsub.MessageHeaders{
+		"origin": u.appName,
+	}
+	u.publisher.Publish(ctx, "customer-change-email", fmt.Sprintf("customer:%d", c.ID), messageHeader, changeEmailEventBuff)
 
 	if err := u.session.Delete(ctx, fmt.Sprintf("customer:%d", c.ID)); err != nil {
 		return ChangeEmailResponse{}, err
@@ -307,7 +312,10 @@ func (u *customerUseCase) SignUp(ctx context.Context, req SignUpRequest) (SignUp
 		return SignUpResponse{}, errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "an error occured while signing up customer")
 	}
 
-	u.publisher.Publish(ctx, "customer-sign-up", fmt.Sprintf("customer:%d", c.ID), nil, signUpEventBuff)
+	messageHeader := pubsub.MessageHeaders{
+		"origin": u.appName,
+	}
+	u.publisher.Publish(ctx, "customer-sign-up", fmt.Sprintf("customer:%d", c.ID), messageHeader, signUpEventBuff)
 
 	resp := SignUpResponse{
 		VerificationExpiresAt: linkExpiresAt,
@@ -424,6 +432,7 @@ func (u *customerUseCase) VerifyChangeEmail(ctx context.Context, req ChangeEmail
 
 func NewCustomerUseCase(props CustomerUseCaseProperty) CustomerUseCase {
 	return &customerUseCase{
+		appName:            props.AppName,
 		logger:             props.Logger,
 		timeout:            props.Timeout,
 		tmuserBaseURL:      props.TMUserBaseURL,

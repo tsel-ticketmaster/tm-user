@@ -28,8 +28,19 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
+var (
+	c           *config.Config
+	CustomerApp string
+	AdminApp    string
+)
+
+func init() {
+	c = config.Get()
+	AdminApp = fmt.Sprintf("%s/%s", c.Application.Name, "adminapp")
+	CustomerApp = fmt.Sprintf("%s/%s", c.Application.Name, "customerapp")
+}
+
 func main() {
-	c := config.Get()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -85,6 +96,7 @@ func main() {
 	// customer's app
 	customerappCustomerRepository := customer.NewCustomerRepository(logger, psqldb)
 	customerappCustomerUseCase := customer.NewCustomerUseCase(customer.CustomerUseCaseProperty{
+		AppName:            CustomerApp,
 		Logger:             logger,
 		Timeout:            c.Application.Timeout,
 		TMUserBaseURL:      c.Application.TMUser.BaseURL,

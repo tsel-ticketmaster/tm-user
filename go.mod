@@ -1,9 +1,8 @@
 module github.com/tsel-ticketmaster/tm-user
 
-go 1.22.0
+go 1.21
 
 require (
-	github.com/google/uuid v1.4.0
 	go.opentelemetry.io/otel v1.25.0
 	go.opentelemetry.io/otel/sdk v1.25.0
 )

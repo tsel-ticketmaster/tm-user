@@ -30,13 +30,13 @@ func (s *AdminSession) Verify(next http.HandlerFunc) http.HandlerFunc {
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			s.respondUnauthorized(w, "invalid token")
+			respondUnauthorized(w, "invalid token")
 			return
 		}
 
 		bearerToken := strings.Split(authHeader, " ")
 		if len(bearerToken) != 2 {
-			s.respondUnauthorized(w, "invalid token")
+			respondUnauthorized(w, "invalid token")
 			return
 		}
 
@@ -45,18 +45,18 @@ func (s *AdminSession) Verify(next http.HandlerFunc) http.HandlerFunc {
 		var claim jwt.Claim
 
 		if err := s.jsonWebToken.Parse(ctx, token, &claim); err != nil {
-			s.respondUnauthorized(w, err.Error())
+			respondUnauthorized(w, err.Error())
 			return
 		}
 
 		acc, err := s.sess.Get(ctx, claim.Subject)
 		if err != nil {
-			s.respondUnauthorized(w, err.Error())
+			respondUnauthorized(w, err.Error())
 			return
 		}
 
 		if acc.Type != "ADMIN" {
-			s.respondUnauthorized(w, "invalid type of user")
+			respondUnauthorized(w, "invalid type of user")
 			return
 		}
 
@@ -67,9 +67,65 @@ func (s *AdminSession) Verify(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (s *AdminSession) respondUnauthorized(w http.ResponseWriter, message string) {
+func respondUnauthorized(w http.ResponseWriter, message string) {
 	response.JSON(w, http.StatusUnauthorized, response.RESTEnvelope{
 		Status:  status.UNAUTHORIZED,
 		Message: message,
 	})
+}
+
+type CustomerSession struct {
+	jsonWebToken *jwt.JSONWebToken
+	sess         session.Session
+}
+
+func NewCustomerSessionMiddleware(jsonWebToken *jwt.JSONWebToken, sess session.Session) *CustomerSession {
+	return &CustomerSession{
+		jsonWebToken: jsonWebToken,
+		sess:         sess,
+	}
+}
+
+// Verify will verify the incomming request by checking authorization header.
+func (s *CustomerSession) Verify(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			respondUnauthorized(w, "invalid token")
+			return
+		}
+
+		bearerToken := strings.Split(authHeader, " ")
+		if len(bearerToken) != 2 {
+			respondUnauthorized(w, "invalid token")
+			return
+		}
+
+		token := bearerToken[1]
+
+		var claim jwt.Claim
+
+		if err := s.jsonWebToken.Parse(ctx, token, &claim); err != nil {
+			respondUnauthorized(w, err.Error())
+			return
+		}
+
+		acc, err := s.sess.Get(ctx, claim.Subject)
+		if err != nil {
+			respondUnauthorized(w, err.Error())
+			return
+		}
+
+		if acc.Type != "CUSTOMER" {
+			respondUnauthorized(w, "invalid type of user")
+			return
+		}
+
+		ctx = context.WithValue(ctx, session.AccountContextKey{}, acc)
+		r = r.WithContext(ctx)
+
+		next(w, r)
+	}
 }

@@ -5,6 +5,8 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
+	"time"
 
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -20,8 +22,15 @@ func GenerateRandomHEX(size int) string {
 }
 
 // GenerateSecret returns hashed string from combination of plain and salt. It presented in base64 format. The used algorithm is sha512.
-func GenerateSecret(plain, salt string) string {
-	b := pbkdf2.Key([]byte(plain), []byte(salt), 128, 32, sha512.New)
+func GenerateSecret(plain, salt string, len int) string {
+	b := pbkdf2.Key([]byte(plain), []byte(salt), 128, len, sha512.New)
 
 	return base64.StdEncoding.EncodeToString(b)
+}
+
+func GenerateTimestampWithPrefix(prefix string) string {
+	now := time.Now()
+	micro := now.UnixMicro()
+
+	return fmt.Sprintf("%s%d", prefix, micro)
 }

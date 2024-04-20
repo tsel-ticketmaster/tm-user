@@ -28,9 +28,9 @@ func InitHTTPHandler(router *mux.Router, adminSession *middleware.AdminSession, 
 		AdminUseCase: adminUseCase,
 	}
 
-	router.HandleFunc("/api/v1/adminapp/administrators/signin", publicMiddleware.SetRouteChain(handler.SignIn)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/adminapp/administrators", publicMiddleware.SetRouteChain(handler.Create, adminSession.Verify)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/adminapp/administrators/signout", publicMiddleware.SetRouteChain(handler.SignOut, adminSession.Verify)).Methods(http.MethodPost)
+	router.HandleFunc("/tm-user/v1/adminapp/administrators/signin", publicMiddleware.SetRouteChain(handler.SignIn)).Methods(http.MethodPost)
+	router.HandleFunc("/tm-user/v1/adminapp/administrators", publicMiddleware.SetRouteChain(handler.Create, adminSession.Verify)).Methods(http.MethodPost)
+	router.HandleFunc("/tm-user/v1/adminapp/administrators/signout", publicMiddleware.SetRouteChain(handler.SignOut, adminSession.Verify)).Methods(http.MethodPost)
 }
 
 func (handler HTTPHandler) validate(ctx context.Context, payload interface{}) error {

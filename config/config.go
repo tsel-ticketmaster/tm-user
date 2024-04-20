@@ -23,6 +23,12 @@ type Config struct {
 		Environment string
 		Debug       bool
 		Timeout     time.Duration
+		TMUser      struct {
+			BaseURL string
+		}
+	}
+	Crypto struct {
+		Secret string
 	}
 	OpenTelemetry struct {
 		Collector struct {
@@ -71,6 +77,12 @@ func (cfg *Config) application() {
 
 	timeoutInSec, _ := strconv.Atoi(os.Getenv("APP_TIMEOUT"))
 	cfg.Application.Timeout = time.Duration(timeoutInSec) * time.Second
+
+	cfg.Application.TMUser.BaseURL = os.Getenv("APP_TMUSER_BASE_URL")
+}
+
+func (cfg *Config) crypto() {
+	cfg.Crypto.Secret = os.Getenv("CRYPTO_SECRET")
 }
 
 func (cfg *Config) openTelemetry() {
@@ -126,6 +138,7 @@ func (cfg *Config) gcp() {
 func load() *Config {
 	cfg := new(Config)
 	cfg.application()
+	cfg.crypto()
 	cfg.openTelemetry()
 	cfg.jwt()
 	cfg.postgresql()

@@ -169,11 +169,10 @@ func (r *customerRepository) Update(ctx context.Context, ID int64, c Customer, t
 			password = $3,
 			password_salt = $4,
 			verification_status = $5,
-			member_status = $6
-			created_at = $7,
-			updated_at = $8
+			member_status = $6,
+			updated_at = $7
 		WHERE
-			id = $9
+			id = $8
 	`
 
 	stmt, err := cmd.PrepareContext(ctx, query)
@@ -182,7 +181,7 @@ func (r *customerRepository) Update(ctx context.Context, ID int64, c Customer, t
 		return errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "an error occurred while updating customer's prorperties")
 	}
 
-	_, err = stmt.ExecContext(ctx, c.Name, c.Email, c.Password, c.PasswordSalt, c.VerificationStatus, c.MemberStatus, c.CreatedAt, c.UpdatedAt, ID)
+	_, err = stmt.ExecContext(ctx, c.Name, c.Email, c.Password, c.PasswordSalt, c.VerificationStatus, c.MemberStatus, c.UpdatedAt, ID)
 	if err != nil {
 		r.logger.WithContext(ctx).WithError(err).Error()
 		return errors.New(http.StatusInternalServerError, status.INTERNAL_SERVER_ERROR, "an error occurred while updating customer's prorperties")

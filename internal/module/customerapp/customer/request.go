@@ -27,3 +27,7 @@ type ChangePasswordRequest struct {
 	ExistingPassword string `json:"existing_password" validate:"required"`
 	NewPassword      string `json:"new_password" validate:"required"`
 }
+
+type ChangeEmailVerificationRequest struct {
+	Token string
+}

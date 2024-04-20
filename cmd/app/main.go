@@ -12,6 +12,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/tsel-ticketmaster/tm-user/config"
 	"github.com/tsel-ticketmaster/tm-user/internal/module/adminapp/admin"
+	"github.com/tsel-ticketmaster/tm-user/internal/module/customerapp/customer"
 	"github.com/tsel-ticketmaster/tm-user/internal/pkg/jwt"
 	internalMiddleare "github.com/tsel-ticketmaster/tm-user/internal/pkg/middleware"
 	"github.com/tsel-ticketmaster/tm-user/internal/pkg/session"
@@ -57,6 +58,7 @@ func main() {
 	session := session.NewRedisSessionStore(logger, rc)
 
 	adminSessionMiddleware := internalMiddleare.NewAdminSessionMiddleware(jsonWebToken, session)
+	customerSessionMiddleware := internalMiddleare.NewCustomerSessionMiddleware(jsonWebToken, session)
 
 	router := mux.NewRouter()
 	router.Use(
@@ -75,6 +77,20 @@ func main() {
 		AdminRepository: adminappAdminRepository,
 	})
 	admin.InitHTTPHandler(router, adminSessionMiddleware, validate, adminappAdminUseCase)
+
+	// customer's app
+	customerappCustomerRepository := customer.NewCustomerRepository(logger, psqldb)
+	customerappCustomerUseCase := customer.NewCustomerUseCase(customer.CustomerUseCaseProperty{
+		Logger:             logger,
+		Timeout:            c.Application.Timeout,
+		TMUserBaseURL:      c.Application.TMUser.BaseURL,
+		CryptoSecret:       c.Crypto.Secret,
+		JSONWebToken:       jsonWebToken,
+		Session:            session,
+		Cache:              rc,
+		CustomerRepository: customerappCustomerRepository,
+	})
+	customer.InitHTTPHandler(router, customerSessionMiddleware, validate, customerappCustomerUseCase)
 
 	handler := middleware.SetChain(
 		router,

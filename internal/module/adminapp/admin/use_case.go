@@ -68,7 +68,7 @@ func (a adminUseCase) Create(ctx context.Context, req CreateRequest) (CreateResp
 	now := time.Now()
 	passwordSalt := util.GenerateRandomHEX(16)
 	defaultPassword := "P@ssw0rd"
-	hashedPassword := util.GenerateSecret(defaultPassword, passwordSalt)
+	hashedPassword := util.GenerateSecret(defaultPassword, passwordSalt, 32)
 
 	newAdmin := Administrator{
 		Name:         req.Name,
@@ -105,7 +105,7 @@ func (a adminUseCase) SignIn(ctx context.Context, req SignInRequest) (SignInResp
 		return SignInResponse{}, err
 	}
 
-	hashPassword := util.GenerateSecret(req.Password, admin.PasswordSalt)
+	hashPassword := util.GenerateSecret(req.Password, admin.PasswordSalt, 32)
 
 	if hashPassword != admin.Password {
 		return SignInResponse{}, errors.New(http.StatusBadRequest, status.BAD_REQUEST, "invalid admin email or password")

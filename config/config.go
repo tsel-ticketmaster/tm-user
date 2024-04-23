@@ -75,6 +75,9 @@ type Config struct {
 		ProjectID      string
 		ServiceAccount []byte
 	}
+	Admin struct {
+		DefaultPassword string
+	}
 }
 
 func (cfg *Config) application() {
@@ -87,6 +90,10 @@ func (cfg *Config) application() {
 	cfg.Application.Timeout = time.Duration(timeoutInSec) * time.Second
 
 	cfg.Application.TMUser.BaseURL = os.Getenv("APP_TMUSER_BASE_URL")
+}
+
+func (cfg *Config) admin() {
+	cfg.Admin.DefaultPassword = os.Getenv("ADMIN_DEFAULT_PASSWORD")
 }
 
 func (cfg *Config) crypto() {
@@ -163,6 +170,7 @@ func load() *Config {
 	cfg.redis()
 	cfg.kafka()
 	cfg.gcp()
+	cfg.admin()
 	return cfg
 }
 

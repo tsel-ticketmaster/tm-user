@@ -27,6 +27,7 @@ type AdminUseCase interface {
 
 type adminUseCase struct {
 	logger          *logrus.Logger
+	defaultPassword string
 	timeout         time.Duration
 	jsonWebToken    *jwt.JSONWebToken
 	session         session.Session
@@ -35,6 +36,7 @@ type adminUseCase struct {
 
 type AdminUseCaseProperty struct {
 	Logger          *logrus.Logger
+	DefaultPassword string
 	Timeout         time.Duration
 	JSONWebToken    *jwt.JSONWebToken
 	Session         session.Session
@@ -44,6 +46,7 @@ type AdminUseCaseProperty struct {
 func NewAdminUseCase(props AdminUseCaseProperty) AdminUseCase {
 	return adminUseCase{
 		logger:          props.Logger,
+		defaultPassword: props.DefaultPassword,
 		timeout:         props.Timeout,
 		jsonWebToken:    props.JSONWebToken,
 		session:         props.Session,
@@ -67,7 +70,7 @@ func (a adminUseCase) Create(ctx context.Context, req CreateRequest) (CreateResp
 
 	now := time.Now()
 	passwordSalt := util.GenerateRandomHEX(16)
-	defaultPassword := "P@ssw0rd"
+	defaultPassword := a.defaultPassword
 	hashedPassword := util.GenerateSecret(defaultPassword, passwordSalt, 32)
 
 	newAdmin := Administrator{

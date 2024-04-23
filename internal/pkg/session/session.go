@@ -20,9 +20,10 @@ var (
 type AccountContextKey struct{}
 
 type Account struct {
-	ID   int64
-	Name string
-	Type string
+	ID    int64
+	Email string
+	Name  string
+	Type  string
 }
 
 type Session interface {

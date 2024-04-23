@@ -217,9 +217,10 @@ func (u *customerUseCase) SignIn(ctx context.Context, req SignInRequest) (SignIn
 	}
 
 	if err := u.session.Set(ctx, fmt.Sprintf("%s:%d", "customer", c.ID), session.Account{
-		ID:   c.ID,
-		Name: c.Name,
-		Type: userType,
+		ID:    c.ID,
+		Email: c.Email,
+		Name:  c.Name,
+		Type:  userType,
 	}, expiresIn); err != nil {
 		return SignInResponse{}, err
 	}

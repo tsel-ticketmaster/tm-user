@@ -3,9 +3,7 @@ package admin
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -39,17 +37,19 @@ func (handler HTTPHandler) validate(ctx context.Context, payload interface{}) er
 		return nil
 	}
 
-	errorFields := err.(validator.ValidationErrors)
+	panic(err)
 
-	errMessages := make([]string, len(errorFields))
+	// errorFields := err.(validator.ValidationErrors)
 
-	for k, errorField := range errorFields {
-		errMessages[k] = fmt.Sprintf("invalid '%s' with value '%v'", errorField.Field(), errorField.Value())
-	}
+	// errMessages := make([]string, len(errorFields))
 
-	errorMessage := strings.Join(errMessages, ", ")
+	// for k, errorField := range errorFields {
+	// 	errMessages[k] = fmt.Sprintf("invalid '%s' with value '%v'", errorField.Field(), errorField.Value())
+	// }
 
-	return fmt.Errorf(errorMessage)
+	// errorMessage := strings.Join(errMessages, ", ")
+
+	// return fmt.Errorf(errorMessage)
 
 }
 

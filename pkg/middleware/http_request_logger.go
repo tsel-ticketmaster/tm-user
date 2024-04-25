@@ -33,7 +33,7 @@ type httpRequestLoggerMiddleware struct {
 func NewHTTPRequestLogger(logger *logrus.Logger, debug bool, statusCode ...int) HTTPRequestLogger {
 	if debug {
 		httpStatusMap := make(map[int]bool)
-		for s := range statusCode {
+		for _, s := range statusCode {
 			httpStatusMap[s] = true
 		}
 		return &httpRequestLoggerMiddleware{
@@ -106,7 +106,6 @@ func (m *httpRequestLoggerMiddleware) Middleware(handler http.Handler) http.Hand
 		}
 		captured["http.response.body"] = responseBodyData
 		captured["time_consumption"] = elapsed.String()
-
 		if ok := m.httpStatusMap[result.StatusCode]; ok {
 			entry := m.logger.WithContext(r.Context()).WithFields(captured)
 			entry.Info()

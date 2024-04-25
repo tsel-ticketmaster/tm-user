@@ -79,7 +79,8 @@ func main() {
 	router.Use(
 		otelmux.Middleware(c.Application.Name),
 		middleware.HTTPResponseTraceInjection,
-		middleware.NewHTTPRequestLogger(logger, c.Application.Debug).Middleware,
+		middleware.NewHTTPRequestLogger(logger, c.Application.Debug, http.StatusInternalServerError).Middleware,
+		middleware.NewRecovery(logger, false).Middleware,
 	)
 
 	// admin's app

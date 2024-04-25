@@ -8,6 +8,12 @@
 
 This Project is used to handle ticket master customer services including auth, registration and profile.
 
+### High Level Architecture
+![High Level Architecture](https://storage.googleapis.com/tsel-ticketmaster/Ticekt%20Master%202.png)
+
+### Entity Relationship Diagram
+![ERD](https://storage.googleapis.com/tsel-ticketmaster/TicketMaster-ERD.png)
+
 ### Prerequisites
 
 What things you need to install the software and how to install them
